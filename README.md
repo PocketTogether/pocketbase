@@ -32,4 +32,14 @@ v0.0.0-haruki-pbv0.36.9
 正式发布将用于PocketTogether旗下项目的pocketbase
 ```
 v0.0.0-poto-pbv0.36.9
+
+失败了
+对于组织，好像要开启工作流读写权限
+https://github.com/organizations/PocketTogether/settings/actions
+Workflow permissions
+Read and write permissions
+
+v0.0.1-poto-pbv0.36.9
 ```
+
+
