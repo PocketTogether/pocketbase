@@ -59,7 +59,6 @@ PocketTogether 维护的 PocketBase 构建版本，基于官方 PocketBase **v0.
 
 本仓库不是官方 fork，而是基于官方源码重新创建的轻量仓库，适合长期维护。
 
----
 
 ## 🏗 构建来源
 
@@ -71,7 +70,6 @@ PocketTogether 维护的 PocketBase 构建版本，基于官方 PocketBase **v0.
   - https://github.com/pocketbase/pocketbase
   - https://github.com/pocketbase/pocketbase/tree/v0.36.9
 
----
 
 ## 🚀 构建与发布流程
 
@@ -98,7 +96,6 @@ PocketTogether 组织需要开启：
 
 否则构建无法创建 Release。
 
----
 
 ## 📦 构建产物
 
@@ -111,7 +108,6 @@ PocketTogether 组织需要开启：
 
 所有产物均由 goreleaser 自动生成。
 
----
 
 ## 🔖 版本号规范
 
@@ -133,7 +129,6 @@ v0.0.1-poto-pbv0.36.9
 - `poto` — PocketTogether 标识  
 - `pbv0.36.9` — 基于 PocketBase v0.36.9  
 
----
 
 ## 🧩 与官方 PocketBase 的关系
 
