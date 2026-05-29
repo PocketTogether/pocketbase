@@ -493,6 +493,16 @@ type App interface {
 	// ExternalAuth model that satisfies the non-nil expression.
 	FindFirstExternalAuthByExpr(expr dbx.Expression) (*ExternalAuth, error)
 
+	// 【260529】v0.0.2-poto-pbv0.36.9 (WIP)
+	// 给本项目弄pbv0.37.4里的安全修复
+	// core/app.go
+	// https://github.com/pocketbase/pocketbase/commit/ca7cf1162ff429070e4672f6b221386c1db2c376?w=0#diff-276c8070156ecbc14c034c8a6b7f5b7315e45f85ee45b9ed2363a2984d6d7ebb
+
+	// DeleteAllExternalAuthsByRecord deletes all ExternalAuth models associated with the provided record.
+	//
+	// Returns a combined error with the failed deletes.
+	DeleteAllExternalAuthsByRecord(authRecord *Record) error
+
 	// ---------------------------------------------------------------
 
 	// FindAllMFAsByRecord returns all MFA models linked to the provided auth record.

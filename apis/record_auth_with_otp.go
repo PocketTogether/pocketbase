@@ -8,6 +8,11 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 )
 
+// 【260529】v0.0.2-poto-pbv0.36.9 (WIP)
+// 给本项目弄pbv0.37.4里的安全修复
+// apis/record_auth_with_otp.go
+// https://github.com/pocketbase/pocketbase/commit/ca7cf1162ff429070e4672f6b221386c1db2c376?w=0#diff-8dc7a13574818d2a687d0d06f34663deeee1381eede8844fd5d6988e6706849b
+
 func recordAuthWithOTP(e *core.RequestEvent) error {
 	collection, err := findAuthCollection(e)
 	if err != nil {
@@ -71,8 +76,15 @@ func recordAuthWithOTP(e *core.RequestEvent) error {
 		otpSentTo := e.OTP.SentTo()
 		if !e.Record.Verified() && otpSentTo != "" && e.Record.Email() == otpSentTo {
 			e.Record.SetVerified(true)
-			err = e.App.Save(e.Record)
-			if err != nil {
+
+			// this is technically not required but we enforce password
+			// reset on verified upgrades in case the OTP is used on its own
+			// since this makes it less error prone to pre-hijacking attacks
+			if !e.Record.Collection().MFA.Enabled {
+				e.Record.SetRandomPassword()
+			}
+
+			if err := e.App.Save(e.Record); err != nil {
 				e.App.Logger().Error("Failed to update record verified state after successful OTP validation",
 					"error", err,
 					"otpId", e.OTP.Id,

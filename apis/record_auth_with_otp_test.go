@@ -10,6 +10,11 @@ import (
 	"github.com/pocketbase/pocketbase/tools/types"
 )
 
+// 【260529】v0.0.2-poto-pbv0.36.9 (WIP)
+// 给本项目弄pbv0.37.4里的安全修复
+// apis/record_auth_with_otp_test.go
+// https://github.com/pocketbase/pocketbase/commit/ca7cf1162ff429070e4672f6b221386c1db2c376?w=0#diff-853d71bc371b37e87bf88d27dbbaecb0ff6b068e142165a76a769ea175b2ade3
+
 func TestRecordAuthWithOTP(t *testing.T) {
 	t.Parallel()
 
@@ -327,6 +332,15 @@ func TestRecordAuthWithOTP(t *testing.T) {
 				if user.Verified() {
 					t.Fatal("Expected the user to remain unverified because sentTo != email")
 				}
+
+				// ensure that all pre-existing OAuth2 were NOT deleted
+				externalAuths, err := app.FindAllExternalAuthsByRecord(user)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if len(externalAuths) != 2 {
+					t.Fatalf("Expected 2 external auths, found %d", len(externalAuths))
+				}
 			},
 		},
 		{
@@ -364,6 +378,15 @@ func TestRecordAuthWithOTP(t *testing.T) {
 				if err := app.Save(otp); err != nil {
 					t.Fatal(err)
 				}
+
+				// verify that there are at least one pre-existing OAuth2 link
+				externalAuths, err := app.FindAllExternalAuthsByRecord(user)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if len(externalAuths) == 0 {
+					t.Fatal("Expected at least one external auth")
+				}
 			},
 			ExpectedStatus: 200,
 			ExpectedContent: []string{
@@ -388,10 +411,10 @@ func TestRecordAuthWithOTP(t *testing.T) {
 				"OnModelCreate":             1,
 				"OnModelCreateExecute":      1,
 				"OnModelAfterCreateSuccess": 1,
-				// OTP delete
-				"OnModelDelete":             1,
-				"OnModelDeleteExecute":      1,
-				"OnModelAfterDeleteSuccess": 1,
+				// OTP delete + 2 ExternalAuth delete
+				"OnModelDelete":             3,
+				"OnModelDeleteExecute":      3,
+				"OnModelAfterDeleteSuccess": 3,
 				// user verified update
 				"OnModelUpdate":             1,
 				"OnModelUpdateExecute":      1,
@@ -401,9 +424,9 @@ func TestRecordAuthWithOTP(t *testing.T) {
 				"OnRecordCreate":             1,
 				"OnRecordCreateExecute":      1,
 				"OnRecordAfterCreateSuccess": 1,
-				"OnRecordDelete":             1,
-				"OnRecordDeleteExecute":      1,
-				"OnRecordAfterDeleteSuccess": 1,
+				"OnRecordDelete":             3,
+				"OnRecordDeleteExecute":      3,
+				"OnRecordAfterDeleteSuccess": 3,
 				"OnRecordUpdate":             1,
 				"OnRecordUpdateExecute":      1,
 				"OnRecordAfterUpdateSuccess": 1,
@@ -416,6 +439,15 @@ func TestRecordAuthWithOTP(t *testing.T) {
 
 				if !user.Verified() {
 					t.Fatal("Expected the user to be marked as verified")
+				}
+
+				// ensure that all pre-existing OAuth2 links are cleared
+				externalAuths, err := app.FindAllExternalAuthsByRecord(user)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if len(externalAuths) > 0 {
+					t.Fatalf("Expected all external auths to be cleared, found %d", len(externalAuths))
 				}
 			},
 		},

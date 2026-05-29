@@ -2,6 +2,7 @@ package core_test
 
 import (
 	"fmt"
+	"slices"
 	"testing"
 
 	"github.com/pocketbase/dbx"
@@ -170,6 +171,76 @@ func TestFindFirstExternalAuthByExpr(t *testing.T) {
 
 			if result.Id != s.expectedId {
 				t.Errorf("Expected id %q, got %q", s.expectedId, result.Id)
+			}
+		})
+	}
+}
+
+// 【260529】v0.0.2-poto-pbv0.36.9 (WIP)
+// 给本项目弄pbv0.37.4里的安全修复
+// core/external_auth_query_test.go
+// https://github.com/pocketbase/pocketbase/commit/ca7cf1162ff429070e4672f6b221386c1db2c376?w=0#diff-88ede6654c07efbde1d3a9cb429ab3bd0908a48ab1f96bbfee7da41697505c4e
+
+func TestDeleteAllExternalAuthsByRecord(t *testing.T) {
+	t.Parallel()
+
+	testApp, _ := tests.NewTestApp()
+	defer testApp.Cleanup()
+
+	demo1, err := testApp.FindRecordById("demo1", "84nmscqy84lsi1t")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	user1, err := testApp.FindAuthRecordByEmail("users", "test@example.com")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	client1, err := testApp.FindAuthRecordByEmail("clients", "test@example.com")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	client2, err := testApp.FindAuthRecordByEmail("clients", "test2@example.com")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	scenarios := []struct {
+		record     *core.Record
+		deletedIds []string
+	}{
+		{demo1, nil}, // non-auth record
+		{user1, []string{"dlmflokuq1xl342", "clmflokuq1xl341"}},
+		{client1, []string{"f1z5b3843pzc964"}},
+		{client2, nil},
+	}
+
+	for i, s := range scenarios {
+		t.Run(fmt.Sprintf("%d_%s_%s", i, s.record.Collection().Name, s.record.Id), func(t *testing.T) {
+			app, _ := tests.NewTestApp()
+			defer app.Cleanup()
+
+			deletedIds := []string{}
+			app.OnRecordDelete().BindFunc(func(e *core.RecordEvent) error {
+				deletedIds = append(deletedIds, e.Record.Id)
+				return e.Next()
+			})
+
+			err := app.DeleteAllExternalAuthsByRecord(s.record)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if len(deletedIds) != len(s.deletedIds) {
+				t.Fatalf("Expected deleted ids\n%v\ngot\n%v", s.deletedIds, deletedIds)
+			}
+
+			for _, id := range s.deletedIds {
+				if !slices.Contains(deletedIds, id) {
+					t.Errorf("Expected to find deleted id %q in %v", id, deletedIds)
+				}
 			}
 		})
 	}

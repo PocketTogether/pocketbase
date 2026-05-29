@@ -9,6 +9,11 @@ import (
 	"github.com/pocketbase/pocketbase/tests"
 )
 
+// 【260529】v0.0.2-poto-pbv0.36.9 (WIP)
+// 给本项目弄pbv0.37.4里的安全修复
+// apis/record_auth_email_change_confirm_test.go
+// https://github.com/pocketbase/pocketbase/commit/ca7cf1162ff429070e4672f6b221386c1db2c376?w=0#diff-b55fb7b9452399222fb8a324d15e753dd250315bd27efc066a33d13ea1ab6ab2
+
 func TestRecordConfirmEmailChange(t *testing.T) {
 	t.Parallel()
 
@@ -111,11 +116,50 @@ func TestRecordConfirmEmailChange(t *testing.T) {
 				"OnRecordUpdateExecute":             1,
 				"OnRecordAfterUpdateSuccess":        1,
 				"OnRecordValidate":                  1,
+				// unverified->verified external auths removal
+				"OnModelDelete":              2,
+				"OnModelDeleteExecute":       2,
+				"OnModelAfterDeleteSuccess":  2,
+				"OnRecordDelete":             2,
+				"OnRecordDeleteExecute":      2,
+				"OnRecordAfterDeleteSuccess": 2,
+			},
+			BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+				user, err := app.FindAuthRecordByEmail("users", "test@example.com")
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				if user.Verified() {
+					t.Fatalf("Expected the user to be unverified before the confirmation")
+				}
+
+				// ensure that there is at least one pre-existing OAuth2 link
+				externalAuths, err := app.FindAllExternalAuthsByRecord(user)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if len(externalAuths) == 0 {
+					t.Fatal("Expected at least one external auths")
+				}
 			},
 			AfterTestFunc: func(t testing.TB, app *tests.TestApp, res *http.Response) {
-				_, err := app.FindAuthRecordByEmail("users", "change@example.com")
+				user, err := app.FindAuthRecordByEmail("users", "change@example.com")
 				if err != nil {
 					t.Fatalf("Expected to find user with email %q, got error: %v", "change@example.com", err)
+				}
+
+				if !user.Verified() {
+					t.Fatalf("Expected the user to be verified after the confirmation")
+				}
+
+				// ensure that all pre-existing OAuth2 links are cleared
+				externalAuths, err := app.FindAllExternalAuthsByRecord(user)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if len(externalAuths) > 0 {
+					t.Fatalf("Expected all external auths to be cleared, found %d", len(externalAuths))
 				}
 			},
 		},
