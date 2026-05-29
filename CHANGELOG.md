@@ -2,7 +2,10 @@
 
 - 给本项目弄pbv0.37.4里的安全修复
   - 分析 https://github.com/pocketbase/pocketbase/releases/tag/v0.37.4 中的安全修复：OAuth2链接预劫持漏洞修复、bcrypt假密码检查改进。
-  - 经查找，关于pb官方的具体修复提交是 https://github.com/pocketbase/pocketbase/commit/ca7cf1162ff429070e4672f6b221386c1db2c376
+  - 经查找，关于pb官方的具体修复提交是 
+    - https://github.com/pocketbase/pocketbase/commit/ca7cf1162ff429070e4672f6b221386c1db2c376
+    - https://github.com/pocketbase/pocketbase/commit/555a4f1a1ee004af08291092fe0975a56a4c7e9c
+    - https://github.com/pocketbase/pocketbase/commit/326f150db21a028eddd5753271310270cce1674e
 
 
 ## v0.0.2-poto-pbv0.36.9
